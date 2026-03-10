@@ -1,0 +1,16 @@
+{
+ "Data Science":{
+  "Data Analyst":["Python","SQL","Excel","Power BI"],
+  "Data Scientist":["Python","Machine Learning","Statistics"]
+ },
+
+ "Banking":{
+  "Loan Officer":["Financial Analysis","Communication","Risk Management"],
+  "Bank Clerk":["Customer Service","Documentation","Communication"]
+ },
+
+ "Marketing":{
+  "Digital Marketing Executive":["SEO","Social Media","Content Marketing"],
+  "SEO Specialist":["SEO","Google Analytics","Keyword Research"]
+ }
+}
