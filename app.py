@@ -36,7 +36,6 @@ if "page" not in st.session_state:
 # ---------------------------
 
 DOMAIN_KEYWORDS={
-
 "Software Development":["developer","software","engineer","programmer"],
 "Data Science":["data","machine learning","ai","analytics"],
 "Web Development":["frontend","backend","web"],
@@ -57,7 +56,6 @@ DOMAIN_KEYWORDS={
 "Education":["teacher","education"],
 "Customer Support":["support","customer"],
 "Content Writing":["writer","content"]
-
 }
 
 # ---------------------------
@@ -65,7 +63,6 @@ DOMAIN_KEYWORDS={
 # ---------------------------
 
 SKILL_DB=[
-
 "python","java","sql","machine learning","deep learning","html","css",
 "javascript","react","node","django","flask","aws","azure","docker",
 "kubernetes","linux","excel","powerbi","tableau","data analysis",
@@ -73,7 +70,6 @@ SKILL_DB=[
 "project management","testing","automation","networking",
 "cybersecurity","cloud","c++","angular","mongodb","mysql",
 "statistics","nlp","big data"
-
 ]
 
 # ---------------------------
@@ -81,9 +77,7 @@ SKILL_DB=[
 # ---------------------------
 
 def clean_html(text):
-
     text=re.sub("<.*?>"," ",text)
-
     return text.lower()
 
 # ---------------------------
@@ -91,33 +85,24 @@ def clean_html(text):
 # ---------------------------
 
 def train_model():
-
     url="https://remotive.com/api/remote-jobs"
-
     response=requests.get(url).json()
-
     jobs=response["jobs"]
 
     X=[]
     y=[]
 
     for job in jobs[:200]:
-
         desc=job["description"].lower()
-
         skill_count=sum(skill in desc for skill in SKILL_DB)
-
         experience=np.random.randint(0,10)
-
         domain_match=np.random.randint(0,2)
-
         selected=1 if skill_count>3 else 0
 
         X.append([skill_count,experience,domain_match])
         y.append(selected)
 
     model=LogisticRegression()
-
     model.fit(X,y)
 
     return model
@@ -136,19 +121,14 @@ if st.session_state.page=="login":
     password=st.text_input("Password",type="password")
 
     if st.button("Login"):
-
         if username in users and users[username]==password:
-
             st.success("Login successful")
             st.session_state.page="domain"
             st.rerun()
-
         else:
-
             st.error("Invalid username or password")
 
     if st.button("Go to Register"):
-
         st.session_state.page="register"
         st.rerun()
 
@@ -164,16 +144,12 @@ elif st.session_state.page=="register":
     password=st.text_input("Create Password",type="password")
 
     if st.button("Create Account"):
-
         users[username]=password
-
         with open(USER_FILE,"w") as f:
             json.dump(users,f)
-
         st.success("Account created successfully")
 
     if st.button("Go to Login"):
-
         st.session_state.page="login"
         st.rerun()
 
@@ -190,9 +166,7 @@ elif st.session_state.page=="domain":
     if st.button("Load Job Roles"):
 
         url="https://remotive.com/api/remote-jobs"
-
         response=requests.get(url).json()
-
         jobs=response["jobs"]
 
         roles=[]
@@ -201,11 +175,9 @@ elif st.session_state.page=="domain":
         keywords=DOMAIN_KEYWORDS[domain]
 
         for job in jobs:
-
             title=job["title"].lower()
 
             if any(k in title for k in keywords):
-
                 roles.append(job["title"])
                 desc.append(job["description"])
 
@@ -220,9 +192,7 @@ elif st.session_state.page=="domain":
         role=st.selectbox("Job Role",st.session_state.roles)
 
         index=st.session_state.roles.index(role)
-
         description=st.session_state.desc[index]
-
         clean_desc=clean_html(description)
 
         st.subheader("Job Description")
@@ -231,7 +201,6 @@ elif st.session_state.page=="domain":
         st.session_state.job_description=clean_desc
 
         if st.button("Next"):
-
             st.session_state.page="skills"
             st.rerun()
 
@@ -248,12 +217,10 @@ elif st.session_state.page=="skills":
     extracted=[]
 
     for skill in SKILL_DB:
-
         if skill in text:
             extracted.append(skill)
 
     extracted=list(set(extracted))
-
     st.session_state.required_skills=extracted
 
     st.subheader("Required Skills")
@@ -288,9 +255,7 @@ elif st.session_state.page=="skills":
             st.write("•",m)
 
     if "score" in st.session_state:
-
         if st.button("Prediction"):
-
             st.session_state.page="prediction"
             st.rerun()
 
@@ -318,64 +283,85 @@ elif st.session_state.page=="prediction":
 
     st.write("Selection Probability:",probability,"%")
 
+    # ---------------------------
+    # CHARTS
+    # ---------------------------
+
     st.header("Hiring Insights Dashboard")
 
-    # ---------------------------
-    # PAST HIRING CHART
-    # ---------------------------
-
     years=[2019,2020,2021,2022,2023,2024,2025]
-
     selected=[random.randint(80,250) for i in years]
     rejected=[random.randint(200,450) for i in years]
 
-    past_data={
-    "Year":years,
-    "Selected":selected,
-    "Rejected":rejected
-    }
+    df=pd.DataFrame({"Year":years,"Selected":selected,"Rejected":rejected})
+    st.plotly_chart(px.bar(df,x="Year",y=["Selected","Rejected"]))
 
-    df=pd.DataFrame(past_data)
-
-    fig1=px.bar(df,x="Year",y=["Selected","Rejected"],title="Past Hiring Trends")
-
-    st.plotly_chart(fig1)
-
-    # ---------------------------
-    # SKILL + EXPERIENCE CHART
-    # ---------------------------
-
-    analysis_data={
-    "Category":["Matched Skills","Missing Skills","Experience"],
-    "Value":[st.session_state.match,len(st.session_state.missing),st.session_state.exp]
-    }
-
-    df2=pd.DataFrame(analysis_data)
-
-    fig2=px.pie(df2,values="Value",names="Category",title="Skill & Experience Analysis")
-
-    st.plotly_chart(fig2)
-
-    # ---------------------------
-    # FUTURE PREDICTION CHART
-    # ---------------------------
+    df2=pd.DataFrame({
+        "Category":["Matched Skills","Missing Skills","Experience"],
+        "Value":[st.session_state.match,len(st.session_state.missing),st.session_state.exp]
+    })
+    st.plotly_chart(px.pie(df2,values="Value",names="Category"))
 
     future_year=[2026,2027]
-
     future_selected=[random.randint(250,350) for i in future_year]
     future_rejected=[random.randint(350,500) for i in future_year]
 
-    future_data={
-    "Year":future_year,
-    "Selected":future_selected,
-    "Rejected":future_rejected
-    }
+    df3=pd.DataFrame({"Year":future_year,"Selected":future_selected,"Rejected":future_rejected})
+    st.plotly_chart(px.bar(df3,x="Year",y=["Selected","Rejected"]))
 
-    df3=pd.DataFrame(future_data)
+    # ---------------------------
+    # NEW FEATURE: SUGGESTIONS
+    # ---------------------------
 
-    fig3=px.bar(df3,x="Year",y=["Selected","Rejected"],title="Future Hiring Prediction")
+    st.header("Career Improvement Suggestions")
 
-    st.plotly_chart(fig3)
+    match=st.session_state.match
+    missing=st.session_state.missing
+    score=st.session_state.score
+    experience=st.session_state.exp
+
+    st.subheader("Strengths")
+
+    if match>=5:
+        st.success("Strong skill match")
+    else:
+        st.warning("Skill match is low")
+
+    if experience>=3:
+        st.success("Good experience")
+    else:
+        st.warning("Low experience")
+
+    st.subheader("Weak Areas")
+
+    if missing:
+        for m in missing:
+            st.write("•",m)
+
+    st.subheader("Suggestions")
+
+    if score<50:
+        st.write("👉 Improve basic skills")
+        st.write("👉 Do projects")
+    elif score<75:
+        st.write("👉 Learn advanced topics")
+    else:
+        st.write("👉 Start applying for jobs")
+
+    if experience<2:
+        st.write("👉 Gain internship experience")
+
+    st.subheader("Recommended Skills to Learn")
+
+    for skill in missing[:5]:
+        st.write("📘",skill)
+
+    st.subheader("Final Advice")
+
+    if score>70 and experience>2:
+        st.success("You are ready for jobs")
+    else:
+        st.warning("Improve skills before job applying")
 
     if st.button("Back"):
         st.session_state.page="domain"
